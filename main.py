@@ -63,6 +63,18 @@ def get_apple_jobs(page, location="finland-FINC", job_title="Intern"):
 
     return job_descriptions
 
+def get_amazon_jobs(page, location="FIN", job_title="Intern"):
+    url = f"https://www.amazon.jobs/en/search?base_query={job_title}&country={location}"
+    page.goto(url, wait_until="networkidle")
+    
+    job_items = page.locator("div.job-tile-lists > div").all()
+    print(f"Found {len(job_items)} Amazon jobs.")
+    job_descriptions = []
+    for item in job_items:
+        job_descriptions.append(item.inner_text())
+
+    return job_descriptions
+
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
     page = browser.new_page()
@@ -71,6 +83,7 @@ with sync_playwright() as p:
     # microsoft_jobs = get_microsoft_jobs(page)
     # amd_jobs = get_amd_jobs(page)
     # nvidia_jobs = get_nvidia_jobs(page)
-    apple_jobs = get_apple_jobs(page)
+    # apple_jobs = get_apple_jobs(page)
+    amazon_jobs = get_amazon_jobs(page)
 
     browser.close()
