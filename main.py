@@ -27,12 +27,25 @@ def get_microsoft_jobs(page, location="Finland", job_title="Intern"):
 
     return job_descriptions
 
+def get_amd_jobs(page, location="Espoo", job_title="Intern"):
+    url = f"https://careers.amd.com/careers-home/jobs?stretchUnit=MILES&stretch=10&location={location}&keywords={job_title}&sortBy=relevance&page=1"
+    page.goto(url, wait_until="networkidle")
+
+    job_items = page.locator("mat-expansion-panel-header").all()
+    print(f"Found {len(job_items)} AMD jobs.")
+    job_descriptions = []
+    for item in job_items:
+        job_descriptions.append(item.inner_text())
+    
+    return job_descriptions
+
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
+    browser = p.chromium.launch(headless=False)
     page = browser.new_page()
 
-    google_jobs = get_google_jobs(page)
-    microsoft_jobs = get_microsoft_jobs(page)
+    # google_jobs = get_google_jobs(page)
+    # microsoft_jobs = get_microsoft_jobs(page)
+    amd_jobs = get_amd_jobs(page)
 
     browser.close()
