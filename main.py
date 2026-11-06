@@ -75,6 +75,18 @@ def get_amazon_jobs(page, location="FIN", job_title="Intern"):
 
     return job_descriptions
 
+def get_netflix_jobs(page, location="Finland", job_title="Intern"):
+    url = f"https://explore.jobs.netflix.net/careers?query={job_title}&location={location}&domain=netflix.com&sort_by=relevance&triggerGoButton=false"
+    page.goto(url, wait_until="networkidle")
+    
+    job_items = page.locator("div.position-sidebar-scroll-handler div[role='list'] > div").all()
+    print(f"Found {len(job_items)} Netflix jobs.")
+    job_descriptions = []
+    for item in job_items:
+        job_descriptions.append(item.inner_text())
+
+    return job_descriptions
+
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
     page = browser.new_page()
@@ -84,6 +96,7 @@ with sync_playwright() as p:
     # amd_jobs = get_amd_jobs(page)
     # nvidia_jobs = get_nvidia_jobs(page)
     # apple_jobs = get_apple_jobs(page)
-    amazon_jobs = get_amazon_jobs(page)
+    # amazon_jobs = get_amazon_jobs(page)
+    netflix_jobs = get_netflix_jobs(page)
 
     browser.close()
