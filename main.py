@@ -39,6 +39,17 @@ def get_amd_jobs(page, location="Espoo", job_title="Intern"):
     
     return job_descriptions
 
+def get_nvidia_jobs(page, location="Finland", job_title="Intern"):
+    url = f"https://jobs.nvidia.com/careers?query={job_title}&start=0&location={location}&sort_by=relevance&filter_include_remote=1&filter_include_relocation=0"
+    page.goto(url, wait_until="networkidle")
+
+    job_items = page.locator('div[aria-label="Job search results"] > div').all()
+    print(f"Found {len(job_items)} Nvidia jobs.")
+    job_descriptions = []
+    for item in job_items:
+        job_descriptions.append(item.inner_text())
+
+    return job_descriptions
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)
@@ -46,6 +57,7 @@ with sync_playwright() as p:
 
     # google_jobs = get_google_jobs(page)
     # microsoft_jobs = get_microsoft_jobs(page)
-    amd_jobs = get_amd_jobs(page)
+    # amd_jobs = get_amd_jobs(page)
+    nvidia_jobs = get_nvidia_jobs(page)
 
     browser.close()
