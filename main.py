@@ -1,3 +1,5 @@
+import os
+import requests
 from dotenv import load_dotenv
 from google import genai
 from playwright.sync_api import sync_playwright
@@ -113,6 +115,20 @@ def collect_to_list_with_ai(all_jobs_list):
 
         return interaction.output_text
 
+def send_telegram_alert(message: str):
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "Markdown"
+    }
+    
+    response = requests.post(url, json=payload)
+    response.raise_for_status()
+
 with sync_playwright() as p:
     load_dotenv()
 
@@ -120,7 +136,13 @@ with sync_playwright() as p:
     page = browser.new_page()
 
     all_jobs_list = get_all_jobs()
-    formatted_jobs_list = collect_to_list_with_ai(all_jobs_list)
+    formatted_jobs_list = collect_to_list_with_ai(all_jobs_list).splitlines()
     print(formatted_jobs_list)
+
+    if formatted_jobs_list:
+        text = "*Job found:*\n\n" + "\n".join(f"• {job}" for job in formatted_jobs_list)
+        send_telegram_alert(text)
+    else: 
+        print("No jobs found")
 
     browser.close()
