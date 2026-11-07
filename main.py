@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+from google import genai
 from playwright.sync_api import sync_playwright
 
 def get_google_jobs(page, location="Finland", job_title="Intern"):
@@ -88,15 +90,32 @@ def get_netflix_jobs(page, location="Finland", job_title="Intern"):
     return job_descriptions
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False)
+    load_dotenv()
+
+    browser = p.chromium.launch(headless=True)
     page = browser.new_page()
 
-    # google_jobs = get_google_jobs(page)
-    # microsoft_jobs = get_microsoft_jobs(page)
-    # amd_jobs = get_amd_jobs(page)
-    # nvidia_jobs = get_nvidia_jobs(page)
-    # apple_jobs = get_apple_jobs(page)
-    # amazon_jobs = get_amazon_jobs(page)
+    google_jobs = get_google_jobs(page)
+    microsoft_jobs = get_microsoft_jobs(page)
+    amd_jobs = get_amd_jobs(page)
+    nvidia_jobs = get_nvidia_jobs(page)
+    apple_jobs = get_apple_jobs(page)
+    amazon_jobs = get_amazon_jobs(page)
     netflix_jobs = get_netflix_jobs(page)
+
+    all_jobs_list = google_jobs + microsoft_jobs + amd_jobs + nvidia_jobs + apple_jobs + amazon_jobs + netflix_jobs
+    
+    if len(all_jobs_list) > 0:    
+        all_jobs = ''.join(all_jobs_list)
+
+        client = genai.Client()
+
+        prompt = f"Create a bullet point list of these job openings. It should be a single line per job containing job title, company and location. It shouldn't have any markdown formatting. Jobs: {all_jobs}"
+
+        interaction = client.interactions.create(
+            model="gemini-3.5-flash-lite",
+            input=prompt
+        )
+        print(interaction.output_text)
 
     browser.close()
