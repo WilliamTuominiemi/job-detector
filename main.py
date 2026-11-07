@@ -89,12 +89,7 @@ def get_netflix_jobs(page, location="Finland", job_title="Intern"):
 
     return job_descriptions
 
-with sync_playwright() as p:
-    load_dotenv()
-
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page()
-
+def get_all_jobs():
     google_jobs = get_google_jobs(page)
     microsoft_jobs = get_microsoft_jobs(page)
     amd_jobs = get_amd_jobs(page)
@@ -103,19 +98,29 @@ with sync_playwright() as p:
     amazon_jobs = get_amazon_jobs(page)
     netflix_jobs = get_netflix_jobs(page)
 
-    all_jobs_list = google_jobs + microsoft_jobs + amd_jobs + nvidia_jobs + apple_jobs + amazon_jobs + netflix_jobs
-    
+    return google_jobs + microsoft_jobs + amd_jobs + nvidia_jobs + apple_jobs + amazon_jobs + netflix_jobs
+
+def collect_to_list_with_ai(all_jobs_list):
     if len(all_jobs_list) > 0:    
         all_jobs = ''.join(all_jobs_list)
 
         client = genai.Client()
-
         prompt = f"Create a bullet point list of these job openings. It should be a single line per job containing job title, company and location. It shouldn't have any markdown formatting. Jobs: {all_jobs}"
-
         interaction = client.interactions.create(
             model="gemini-3.5-flash-lite",
             input=prompt
         )
-        print(interaction.output_text)
+
+        return interaction.output_text
+
+with sync_playwright() as p:
+    load_dotenv()
+
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page()
+
+    all_jobs_list = get_all_jobs()
+    formatted_jobs_list = collect_to_list_with_ai(all_jobs_list)
+    print(formatted_jobs_list)
 
     browser.close()
