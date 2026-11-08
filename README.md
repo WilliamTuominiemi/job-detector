@@ -15,7 +15,7 @@ Runs daily at **16:00 UTC** (or manually) via GitHub Actions (`.github/workflows
 
 ### Required Environment Variables / Secrets
 
-- `GEMINI_API_KEY` — Google GenAI API key
-- `DATABASE_URL` — PostgreSQL connection string
-- `TELEGRAM_BOT_TOKEN` — Telegram bot token
-- `TELEGRAM_CHAT_ID` — Target Telegram chat ID
+- `GEMINI_API_KEY` - Google GenAI API key
+- `DATABASE_URL` - PostgreSQL connection string
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token
+- `TELEGRAM_CHAT_ID` - Target Telegram chat ID
