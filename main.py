@@ -2,6 +2,7 @@ import os
 import requests
 import uuid
 import psycopg2
+from difflib import SequenceMatcher
 from dotenv import load_dotenv
 from google import genai
 from playwright.sync_api import sync_playwright
@@ -141,12 +142,12 @@ def get_connection():
     return psycopg2.connect(os.getenv("DATABASE_URL"))
 
 def get_seen_jobs() -> set:
-    query = "SELECT content FROM seen_jobs;"
+    query = "SELECT title, company, location FROM seen_jobs;"
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query)
             rows = cur.fetchall()
-            return {row[0] for row in rows}
+            return {"|".join(row) for row in rows}
 
 def save_new_jobs(jobs):
     if not jobs:
@@ -167,6 +168,24 @@ def save_new_jobs(jobs):
             cur.executemany(query, records)
         conn.commit()
 
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+def filter_out_seen_jobs(found_jobs):
+    new_jobs = []
+    seen_jobs = get_seen_jobs()
+
+    for job in found_jobs:
+        seen = False
+        for seen_job in seen_jobs:
+            if similar(job, seen_job) > 0.9:
+                seen = True
+
+        if not seen:
+            new_jobs.append(job)
+
+    return new_jobs
+
 with sync_playwright() as p:
     load_dotenv()
 
@@ -176,14 +195,14 @@ with sync_playwright() as p:
     all_jobs_list = get_all_jobs(page)
     formatted_jobs_list = collect_to_list_with_ai(all_jobs_list).splitlines()
     print(formatted_jobs_list)
+    filtered_jobs_list = filter_out_seen_jobs(formatted_jobs_list)
+    print(filtered_jobs_list)
 
-    # save_new_jobs(formatted_jobs_list)
-    # print(get_seen_jobs())
-
-    if formatted_jobs_list:
-        text = "*Job found:*\n\n" + "\n".join(f"• {job}" for job in formatted_jobs_list)
+    if filtered_jobs_list:
+        save_new_jobs(filtered_jobs_list)
+        text = "*New jobs found:*\n\n" + "\n".join(f"• {job}" for job in formatted_jobs_list)
         send_telegram_alert(text)
     else: 
-        print("No jobs found")
+        print("No new jobs found")
 
     browser.close()
