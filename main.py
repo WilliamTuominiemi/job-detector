@@ -1,5 +1,7 @@
 import os
 import requests
+import uuid
+import psycopg2
 from dotenv import load_dotenv
 from google import genai
 from playwright.sync_api import sync_playwright
@@ -91,7 +93,7 @@ def get_netflix_jobs(page, location="Finland", job_title="Intern"):
 
     return job_descriptions
 
-def get_all_jobs():
+def get_all_jobs(page):
     google_jobs = get_google_jobs(page)
     microsoft_jobs = get_microsoft_jobs(page)
     amd_jobs = get_amd_jobs(page)
@@ -129,15 +131,48 @@ def send_telegram_alert(message: str):
     response = requests.post(url, json=payload)
     response.raise_for_status()
 
+def get_connection():
+    return psycopg2.connect(os.getenv("DATABASE_URL"))
+
+def get_seen_jobs() -> set:
+    query = "SELECT content FROM seen_jobs;"
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            rows = cur.fetchall()
+            return {row[0] for row in rows}
+
+def save_new_jobs(jobs):
+    if not jobs:
+        return
+
+    query = """
+    INSERT INTO seen_jobs (id, content)
+    VALUES (%s, %s)
+    ON CONFLICT (id) DO NOTHING;
+    """
+    records = [
+        (uuid.uuid4().hex, job)
+        for job in jobs
+    ]
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.executemany(query, records)
+        conn.commit()
+
 with sync_playwright() as p:
     load_dotenv()
 
     browser = p.chromium.launch(headless=True)
     page = browser.new_page()
 
-    all_jobs_list = get_all_jobs()
+    all_jobs_list = get_all_jobs(page)
     formatted_jobs_list = collect_to_list_with_ai(all_jobs_list).splitlines()
     print(formatted_jobs_list)
+
+    # save_new_jobs(formatted_jobs_list)
+    # print(get_seen_jobs())
 
     if formatted_jobs_list:
         text = "*Job found:*\n\n" + "\n".join(f"• {job}" for job in formatted_jobs_list)
