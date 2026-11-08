@@ -109,7 +109,11 @@ def collect_to_list_with_ai(all_jobs_list):
         all_jobs = ''.join(all_jobs_list)
 
         client = genai.Client()
-        prompt = f"Create a bullet point list of these job openings. It should be a single line per job containing job title, company and location. It shouldn't have any markdown formatting. Jobs: {all_jobs}"
+        prompt = f"""Create a bullet point list of these job openings. 
+            It should be a single line per job containing job title, company and location. 
+            These parameters should be separated with the character |.
+            It shouldn't have any markdown formatting. 
+            Jobs: {all_jobs}"""
         interaction = client.interactions.create(
             model="gemini-3.5-flash-lite",
             input=prompt
