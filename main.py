@@ -110,8 +110,10 @@ def collect_to_list_with_ai(all_jobs_list):
 
         client = genai.Client()
         prompt = f"""Create a bullet point list of these job openings. 
-            It should be a single line per job containing job title, company and location. 
+            It should be a single line per job.
+            A line should contain job title, company and location (in that order). 
             These parameters should be separated with the character |.
+            If you can't find a parameter, fill the spot with character -.
             It shouldn't have any markdown formatting. 
             Jobs: {all_jobs}"""
         interaction = client.interactions.create(
@@ -151,12 +153,12 @@ def save_new_jobs(jobs):
         return
 
     query = """
-    INSERT INTO seen_jobs (id, content)
-    VALUES (%s, %s)
+    INSERT INTO seen_jobs (id, title, company, location)
+    VALUES (%s, %s, %s, %s)
     ON CONFLICT (id) DO NOTHING;
     """
     records = [
-        (uuid.uuid4().hex, job)
+        (uuid.uuid4().hex, *job.split("|")[:3])
         for job in jobs
     ]
 
