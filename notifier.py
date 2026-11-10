@@ -9,7 +9,7 @@ def send_telegram_alert(message: str):
     payload = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "Markdown"
+        "parse_mode": "HTML"
     }
     
     response = requests.post(url, json=payload)
