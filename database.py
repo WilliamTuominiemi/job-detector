@@ -19,13 +19,13 @@ def save_new_jobs(jobs):
         return
 
     query = """
-    INSERT INTO seen_jobs (id, title, company, location)
-    VALUES (%s, %s, %s, %s)
+    INSERT INTO seen_jobs (id, title, company, location, link)
+    VALUES (%s, %s, %s, %s, %s)
     ON CONFLICT (id) DO NOTHING;
     """
     records = [
-        (uuid.uuid4().hex, *job.split("|")[:3])
-        for job in jobs
+        (uuid.uuid4().hex, *(job.split("|") + ["-", "-", "-"])[:3], link)
+        for job, link in jobs
     ]
 
     with get_connection() as conn:
@@ -40,13 +40,13 @@ def filter_out_seen_jobs(found_jobs):
     new_jobs = []
     seen_jobs = get_seen_jobs()
 
-    for job in found_jobs:
+    for job, link in found_jobs:
         seen = False
         for seen_job in seen_jobs:
             if similar(job, seen_job) > 0.9:
                 seen = True
 
         if not seen:
-            new_jobs.append(job)
+            new_jobs.append((job, link))
 
     return new_jobs

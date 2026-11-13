@@ -2,12 +2,12 @@ from google import genai
 
 def collect_to_list_with_ai(all_jobs_list):
     if len(all_jobs_list) > 0:    
-        all_jobs = ''.join(all_jobs_list)
+        all_jobs = '\n'.join(f"[{i}] {text}" for i, (text, _link) in enumerate(all_jobs_list))
 
         client = genai.Client()
         prompt = f"""List these job openings. 
             It should be a single line per job.
-            A line should contain job title, company and location (in that order). 
+            A line should contain the job's number (shown in square brackets, without the brackets), job title, company and location (in that order). 
             These parameters should be separated with the character |.
             If you can't find a parameter, fill the spot with character -.
             It shouldn't have any markdown formatting or bullet points. 
