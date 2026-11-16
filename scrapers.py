@@ -79,13 +79,22 @@ def get_netflix_jobs(page, location="Finland", job_title="Intern"):
 
     return collect_job_descriptions("Netflix", job_items, url)
 
-def get_all_jobs(page):
-    google_jobs = get_google_jobs(page)
-    microsoft_jobs = get_microsoft_jobs(page)
-    amd_jobs = get_amd_jobs(page)
-    nvidia_jobs = get_nvidia_jobs(page)
-    apple_jobs = get_apple_jobs(page)
-    amazon_jobs = get_amazon_jobs(page)
-    netflix_jobs = get_netflix_jobs(page)
+SCRAPERS = [
+    get_google_jobs,
+    get_microsoft_jobs,
+    get_amd_jobs,
+    get_nvidia_jobs,
+    get_apple_jobs,
+    get_amazon_jobs,
+    get_netflix_jobs,
+]
 
-    return google_jobs + microsoft_jobs + amd_jobs + nvidia_jobs + apple_jobs + amazon_jobs + netflix_jobs
+def get_all_jobs(page):
+    all_jobs = []
+    for scraper in SCRAPERS:
+        try:
+            all_jobs += scraper(page)
+        except Exception as e:
+            print(f"{scraper.__name__} failed: {type(e).__name__}: {e}")
+
+    return all_jobs
